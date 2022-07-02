@@ -3,159 +3,57 @@
 #include <string.h>
 #include <ctype.h>
 #include <locale.h>
-#include <time.h>   // time é opcional, so inclui para poder ver o tempo de execução do programa
+#include <time.h> // time é opcional, so inclui para poder ver o tempo de execução do programa
 
 // #include "cabecalho.h"
 
-
-/*  CARACTERES IMPORTANTES DA TABELA ASCII:
-
-    
-    Caracteres de controle ASCII: 0 até 31
-
-    Alfabeto Maiusculo: 65 até 90
-    Alfabeto Minusculo: 97 até 122
-    Algarismos : 48 até 57
-    Cedilha: 199 e 231
-    
-    Espaço: 32
-    Ponto final: 46
-    Exclamação: 33
-    Interrogação: 63
-    Vírgula: 44
-    Parenteses: 40 e 41
-    Chaves: 123 e 124
-    Colchetes: 91 e 93
-    Dois pontos: 58
-    Ponto vírgula: 59
-
-    ACENTOS:
-    Letra A Maiuscula:  193 até 196
-    Letra E Maiuscula:  200 até 203
-    Letra I Maiuscula:  204 até 207
-    Letra O Maiuscula:  210 até 214
-    Letra U Maiuscula:  217 até 220
-
-    Letra a Minuscula:  224 até 228
-    Letra e Minuscula:  232 até 235
-    Letra i Minuscula:  236 até 239
-    Letra o Minuscula:  242 até 246
-    Letra u Minuscula:  249 até 252
-
-    https://marquesfernandes.com/desenvolvimento/codigo-ascii-tabela-ascii-completa/
-*/
-
 // depois joga essas funcoes e constante td no header
 #define MIN3(a, b, c) ((a) < (b) ? ((a) < (c) ? (a) : (c)) : ((b) < (c) ? (b) : (c)))
-#define TAM_MAX_PALAVRA 50  
-
-int hamming(int tamanho, unsigned char *s1, unsigned char *s2) {
-    /*  A distância de Hamming entre duas strings de MESMO COMPRIMENTO é
-        o número de posições nas quais elas diferem entre si.
-        Vista de outra forma, ela corresponde ao menor número de substituições necessárias
-        para transformar uma string na outra, ou o número de erros que transformaram uma na outra.
-    */
-    // https://pt.wikipedia.org/wiki/Distância_de_Hamming#Exemplos
+#define TAM_MAX_PALAVRA 50
+#define mostraNoTerminal 0
 
 
-    int distancia = 0;
-    for(int i=0; i<tamanho; i++){
-        if(*s1!=*s2)distancia++;
-        s1++;
-        s2++;
-    }
-    return distancia;
-}
-
-int levenshtein(unsigned char *s1, unsigned char *s2) {
-    /*  A distância Levenshtein ou distância de edição entre dois "strings"
-        (duas sequências de caracteres) é dada pelo número mínimo de operações
-        necessárias para transformar um string no outro.
-        Entendemos por "operações" a inserção, deleção ou substituição de um carácter
-    */
-    // https://pt.wikipedia.org/wiki/Distância_Levenshtein#Limites_superior_e_inferior
-
-
-    int s1len, s2len, x, y, lastdiag, olddiag;
-    s1len = strlen(s1);
-    // printf("tamanho str 1: %d \n", s1len);
-    s2len = strlen(s2);
-    // printf("tamanho str 2: %d \n", s2len);
-    int column[s1len + 1];
-    for (y = 1; y <= s1len; y++)
-        column[y] = y;
-    for (x = 1; x <= s2len; x++) {
-        column[0] = x;
-        for (y = 1, lastdiag = x - 1; y <= s1len; y++) {
-            olddiag = column[y];
-            column[y] = MIN3(column[y] + 1, column[y - 1] + 1, lastdiag + (s1[y-1] == s2[x - 1] ? 0 : 1));
-            lastdiag = olddiag;
-        }
-    }
-
-    // printf("distancia: %d \n", column[s1len] );
-    return column[s1len];
-}
-
-int testaLetra(unsigned char c) {
-
-    // funcao retorna positivo se o caracterer é válido e
-    // negativo se o caractere não for válido
-
-    c = tolower(c);
-
-    if( ( c>=97 && c <=122 ) ||     // alfabeto
-    ( c>=224 && c<=228 ) ||         // acentos letra a
-    ( c>=232 && c<=235 ) ||         // acentos letra e
-    ( c>=236 && c<=239 ) ||         // acentos letra i
-    ( c>=242 && c<=246 ) ||         // acentos letra o
-    ( c>=249 && c<=252 ) ||         // acentos letra u
-    c==231 )                        // cedilha
-    return 1;
-
-    else return 0;
-}
-
-void testeArquivo(FILE *arquivo){  
-    if(!arquivo){
-        printf("ERRO AO ABRIR ARQUIVO");
-        exit(1);
-    }
-}
+/*typedef struct no{
+    // nao vou mais usar lista encadeada :(
+    unsigned char palavraDicionario[TAM_MAX_PALAVRA];
+    struct no *proximoNo;  // aponta para a proxima palavra da lista
+    struct no *proximaLetra; // aponta para a primeira palavra que começa com a proxima letra
+} dicionario;
+*/
 
 /*
 void leituraDicionarioLISTA(FILE *dic, dicionario *comeco){
 // PILHA É UMA MERDA E VAI FAZER O PROGRAMA FICAR LENTO, NÃO VALE A PENA CONTINUAR COM A IDEIA
 // (mas eu vou tentar msm assim)
 
-        Basicamente esta função cria uma fila encadeada 
+        Basicamente esta função cria uma fila encadeada
         lendo as palavras do arquivo dicionario.txt.
-        O ponteiro proximoNo da struct dicionario aponta para a proxima palavra 
+        O ponteiro proximoNo da struct dicionario aponta para a proxima palavra
         e o ponteiro proximaLetra aponta para a primera palavra que começa com uma nova letra.
-    
 
-// ESSA FUNCAO CONSEGUE LER E IMPRIMIR, O PROBLEMA ATE AGORA É QUE ASSIMILAR primeiraNovaLetra 
+
+// ESSA FUNCAO CONSEGUE LER E IMPRIMIR, O PROBLEMA ATE AGORA É QUE ASSIMILAR primeiraNovaLetra
 // À PRIMEIRA PALAVRA COM LETRA NOVA.
 
     char puxaDicionario[TAM_MAX_PALAVRA];
     dicionario *aux1, *aux2, *primeiraNovaLetra;
     aux1 = malloc(sizeof(dicionario));
     primeiraNovaLetra = malloc(sizeof(dicionario));
-    
+
     fgets(comeco->palavraDicionario, TAM_MAX_PALAVRA, dic);
     comeco->proximoNo = aux1;
     primeiraNovaLetra = comeco; // PROVAVELMENTE O PROBLEMA TA AQ
     // ESSE PONTEIRO TALVEZ SEJA UM PONTEIRO PRA PONTEIRO????
-    
+
     // minha ideia é cria palavras chaves que sao as primeiras palavras a comecarem com outra letra
     // o problema é se o ponteiro auxiliar primeiraNovaLetra é uma copia do original ou o apontamento
-    // if(primeiraNovaLetra->palavraDicionario[0] != aux1->palavraDicionario[0]) comeco->proximaLetra = aux1; 
-    
+    // if(primeiraNovaLetra->palavraDicionario[0] != aux1->palavraDicionario[0]) comeco->proximaLetra = aux1;
+
     int i=0;
     while(fgets(puxaDicionario, TAM_MAX_PALAVRA, dic)){
         // printf(puxaDicionario);
-        
-        if(i=0){ 
+
+        if(i=0){
             i=1;
             aux1 = malloc(sizeof(dicionario));
             strcpy(aux1->palavraDicionario, puxaDicionario);
@@ -165,7 +63,7 @@ void leituraDicionarioLISTA(FILE *dic, dicionario *comeco){
 
 // PROVAVELMENTE VOU TER Q MUDAR ESSE IF
             if(primeiraNovaLetra->palavraDicionario[0] != aux1->palavraDicionario[0]){
-            primeiraNovaLetra->proximaLetra = aux1; 
+            primeiraNovaLetra->proximaLetra = aux1;
             primeiraNovaLetra = aux1;
             }
         }
@@ -180,7 +78,7 @@ void leituraDicionarioLISTA(FILE *dic, dicionario *comeco){
 
 // ESSE AQ MUDA JUNTO
             if(primeiraNovaLetra->palavraDicionario[0] != aux2->palavraDicionario[0]){
-            primeiraNovaLetra->proximaLetra = aux2; 
+            primeiraNovaLetra->proximaLetra = aux2;
             primeiraNovaLetra = aux2;
             }
         }
@@ -188,157 +86,267 @@ void leituraDicionarioLISTA(FILE *dic, dicionario *comeco){
 }
 */
 
-size_t achaTamanhoArquivo(FILE *arq){
-// funcao para achar a quantidade de linhas do arquivo 
-// (so é usada no dicionario para saber a quantidade de palavras)
+int hamming(int tamanho, unsigned char *s1, unsigned char *s2) {
+    /*  A distância de Hamming entre duas strings de MESMO COMPRIMENTO é
+        o número de posições nas quais elas diferem entre si.
+        Vista de outra forma, ela corresponde ao menor número de substituições necessárias
+        para transformar uma string na outra, ou o número de erros que transformaram uma na outra.
+    */
+    // https://pt.wikipedia.org/wiki/Distância_de_Hamming#Exemplos
 
+    // NAO VOU MAIS USAR ESSA MERDA
+    int distancia = 0;
+    for (int i = 0; i < tamanho; i++) {
+        if (*s1 != *s2)
+            distancia++;
+        s1++;
+        s2++;
+    }
+    return distancia;
+}
+
+int levenshtein(unsigned char *s1, unsigned char *s2) {
+    /*  A distância Levenshtein ou distância de edição entre dois "strings"
+        (duas sequências de caracteres) é dada pelo número mínimo de operações
+        necessárias para transformar um string no outro.
+        Entendemos por "operações" a inserção, deleção ou substituição de um carácter
+    */
+    // https://pt.wikipedia.org/wiki/Distância_Levenshtein#Limites_superior_e_inferior
+
+    int s1len, s2len, x, y, lastdiag, olddiag;
+    s1len = strlen(s1);
+    s2len = strlen(s2);
+    int column[s1len + 1];
+    for (y = 1; y <= s1len; y++)
+        column[y] = y;
+    for (x = 1; x <= s2len; x++) {
+        column[0] = x;
+        for (y = 1, lastdiag = x - 1; y <= s1len; y++) {
+            olddiag = column[y];
+            column[y] = MIN3(column[y] + 1, column[y - 1] + 1, lastdiag + (s1[y - 1] == s2[x - 1] ? 0 : 1));
+            lastdiag = olddiag;
+        }
+    }
+
+    // if(mostraNoTerminal)    printf("distancia: %d \n", column[s1len] );
+    return column[s1len];
+}
+
+unsigned int achaTamanhoArquivo(FILE *arq) {
+    // funcao para achar a quantidade de linhas do arquivo dicionario
+    
     fseek(arq, 0, SEEK_SET);
 
     char c = fgetc(arq);
-    size_t tamanho=1;
-    while (c!=EOF){
-        if(c == '\n')
+    unsigned int tamanho = 1;
+    while (c != EOF) {
+        if (c == '\n')
             tamanho++;
         c = fgetc(arq);
     }
-    // printf("qtd de linhas do arquivo: %d", tamanho);
+    if(mostraNoTerminal)    printf("qtd de linhas do arquivo: %d\n", tamanho);
     return tamanho;
 }
 
-void leituraDicionarioVETOR(FILE *dic, unsigned char *bancoPalavras[], size_t tamanhoArquivo){
-    // alocação e preenchimento do ponteiro com as palavras do dicionario 
-    
-    fseek( dic, 0, SEEK_SET);
-
-    for(int i=0; i<tamanhoArquivo; i++) {
-        bancoPalavras[i] = malloc(sizeof(char) * TAM_MAX_PALAVRA);
-        if(!bancoPalavras[i]){
-            printf("ERRO AO ALOCAR PONTEIRO %d\n", i+1);
-            exit(2);
-        }
-        fgets(bancoPalavras[i], TAM_MAX_PALAVRA, dic);
-        printf("%s", bancoPalavras[i]);
+void testeArquivo(FILE *arquivo) {
+    // funcao para testar abertura do arquivo
+    if (!arquivo) {
+        printf("ERRO AO ABRIR ARQUIVO");
+        exit(1);
     }
-
 }
 
-int BinarySearch (unsigned char *lista[], unsigned char *busca[], size_t tamanhoDaLista)
-{
-    int inf = 0;     // limite inferior (o primeiro índice de vetor em C é zero          )
-    int sup = tamanhoDaLista-1; // limite superior (termina em um número a menos. 0 a 9 são 10 números)
-    int meio;
-    while (inf <= sup)
-    {
-        meio = (inf + sup)/2;
-        if (busca[0] == lista[meio][0])
-            return meio;
-        if (busca[0] < lista[meio][0])
-            sup = meio-1;
-        else
-            inf = meio+1;
-    }
-    return -1;   // não encontrado
-}
-
-
-// typedef struct no{
-//     // nao vou mais usar lista encadeada :(
-//     unsigned char palavraDicionario[TAM_MAX_PALAVRA];
-//     struct no *proximoNo;  // aponta para a proxima palavra da lista
-//     struct no *proximaLetra; // aponta para a primeira palavra que começa com a proxima letra
-// } dicionario;
-
-int main(){
-setlocale(LC_ALL, "");
-
-clock_t start, end;
-start = clock();
-
-FILE *arq = fopen("palavra.txt", "r");
-testeArquivo(arq);
-// FILE *dic = fopen("dicionario.txt", "r");
-// testeArquivo(dicionario);
-// FILE *arqCopia = fopen("resposta.txt", "w");
-// testeArquivo(arqCopia);
-
-
-// dicionario *comecoLista = malloc(sizeof(dicionario));   //COMECO DO DICIONARIO NA LISTA ENCADEADA
-// leituraDicionarioLISTA(arq, comecoLista);
-
-
-// PLANO B: SE A LISTA ENCADEADA N DER CERTO EU USO UMA MATRIZ MESMO E VAI NA SORTE 
-size_t qtdPalavrasDicionario = achaTamanhoArquivo(arq);
-unsigned char *bancoPalavras[qtdPalavrasDicionario];
-leituraDicionarioVETOR(arq, bancoPalavras, qtdPalavrasDicionario);
-
-
-
-unsigned char *palavra=malloc(sizeof(unsigned char) * TAM_MAX_PALAVRA); // ponteiro para teste de comparação com o dicionario
-unsigned char *resetaPalavra = palavra; // ponteiro para voltar para posição original
-
-char letra;     
-short int fimDePalavra;
-int tamanhoDePalavra;
-
-int totalPalavras = 0;
-do{
-    tamanhoDePalavra = 0;
-
-    // leitura e teste de caractere
-    letra = fgetc(arq);
-    fimDePalavra = testaLetra(letra);
-    
-    // adiciona o caractere e sobe o ponteiro na string contando que seja valido
-    if(fimDePalavra){   
-    *palavra = letra;
-    palavra++;
-    tamanhoDePalavra++;
-    }
-
-    
-    /*  Quando o programa detecta um caractere não valido ele reconhece 
-        o conjunto de caracteres anteriores como uma palavra.
-        Então o ponteiro volta para a primeira posição e usa 
-        as funções hamming e levenshtein
+int testaLetra(unsigned char c) {
+    /*  funcao retorna positivo se o caracterer é válido e
+        negativo se o caractere não for válido.
+        A definição de caracteres válidos nesse código são todas as letras minúsculas
+        com ou sem acento e cedilha.
     */
+    // https://gdhpress.com.br/wp-content/uploads/2019/07/tabelaASCII.pdf
 
-    else{ 
-    memset( palavra, '\0', strlen(palavra) - tamanhoDePalavra );  // preenche o resto da string com \0
-    palavra = resetaPalavra;    // volta string para posicao original para comparar com o dicionario
-    totalPalavras++;
-    puts(palavra);
-        // IMPLEMENTAR FUNCAO PRA PERCORRER DICIONARIO
+    if ((c >= 65 && c <= 90) ||     // alfabeto maiusculo
+        (c >= 97 && c <= 122) ||    // alfabeto minusculo
+        (c >= 130 && c <= 141) ||
+        (c >= 147 && c <= 151) ||
+        (c >= 160 && c <= 163) ||
+        (c == 198) ||
+        (c == 228))
+        return 1;
+    else
+        return 0;
+}
 
-        // if(strlen(palavra) != strlen());
-        // IMPLEMENTAR FUNCOES HAMMING E LEVENSHTEIN
-    palavra = resetaPalavra;    // volta string para posicao original para armazenar uma nova palavra
+void leituraDicionarioVETOR(FILE *dic, unsigned char bancoPalavras[][TAM_MAX_PALAVRA], unsigned int tamanhoArquivo) {
+    // preenchimento do vetor com as palavras do dicionario
+   
+    fseek(dic, 0, SEEK_SET);
+    for (int i=0; i<tamanhoArquivo; i++) {
+        fgets(bancoPalavras[i], TAM_MAX_PALAVRA, dic);
+
+        int tamPalavra = strlen(bancoPalavras[i]);
+        for (int j=0; j<tamPalavra; j++) {
+            if (!testaLetra(bancoPalavras[i][j])) {
+                bancoPalavras[i][j] = '\0';
+                break;
+            }
+        }
+        if(mostraNoTerminal)    printf("%s \n", bancoPalavras[i]);
     }
-    }while(letra!=EOF);
+}
 
-/*
-PROVAVELMENTE VOU PRECISAR CRIAR OUTRO DO WHILE DENTRO DESSE PARA LER 
-CADA PALAVRA SEPARADA E USAR O DE FORA PARA LER O ARQUIVO INTEIRO.
+void limpaPonteiroPalavra(unsigned char *palavra, unsigned char *comeco) {
+    // funcao para limpar e resetar o ponteiro que armazena a palavra testada
+    palavra = comeco;
+    for (int i = 0; i < TAM_MAX_PALAVRA; i++, palavra++)
+        *palavra = '\0';
+    palavra = comeco;
+}
 
-FAÇA UM TESTE PEQUENO DE BUSCA USANDO STRNCMP E PALAVRA.TXT, INICIALMENTE VOU USAR SELECTION SORT MAS
-DEPOIS VOU USAR BUSCA BINARIA PARA SER MAIS RAPIDO. POSSO CRIAR UMA FUNCAO SINTETICA PARECIDA COM O
-STRNCMP MAS QUE TENHA UM BREAK NO MEIO DA STRING CASO NÃO SEJAM IGUAIS PARA DEIXAR O PROGRAMA MAIS RAPIDO.
+int buscaBinaria(unsigned char lista[][TAM_MAX_PALAVRA], unsigned char *busca, unsigned int tamanhoLista, unsigned int tamanhoPalavra) {
+    // Busca uma palavra no dicionario atraves de busca binária.
+    // Retorna positivo se achar ou negativo se não achar
 
-CRIE UMA VARIAVEL CONTADORA PARA SABER O TAMANHO DA PALAVRA PARA FACILITAR A COMPARAÇÃO.
-*/
+    int inf = 0;
+    int sup = tamanhoLista - 1;
+    int meio;
+    while (inf <= sup) {
+        meio = (inf + sup) / 2;
+        if (!strncmp(busca, lista[meio], tamanhoPalavra))         
+            return 1;                                             // encontrado
+        else if (strncmp(busca, lista[meio], tamanhoPalavra) < 0) 
+            sup = meio - 1;
+        else 
+            inf = meio + 1;
+    }
+    return 0; // não encontrado
+}
+
+int sugestaoPalavra(unsigned char lista[][TAM_MAX_PALAVRA], unsigned char *busca, unsigned int tamanhoLista, unsigned int tamanhoPalavra, FILE *arqCopia) {
+    // Mesma coisa que a busca binaria so que com levenshtein no meio 
+    // para achar as palavras parecidas
+
+    int achouSugestao=0;
+    int inf = 0;
+    int sup = tamanhoLista - 1;
+    int meio;
+    while (inf <= sup) {
+        meio = (inf + sup) / 2;
+
+        if (levenshtein(busca, lista[meio]) <= 2) {
+            if(mostraNoTerminal)    printf("(%s)", lista[meio]);
+            fprintf(arqCopia, "(%s)", lista[meio]);
+            achouSugestao = 1;
+        }
+        if (strncmp(busca, lista[meio], tamanhoPalavra) < 0) { // busca é menor
+            sup = meio - 1;
+        }
+        else // busca é maior
+            inf = meio + 1;
+    }
+
+    // essa função tem um retorno mas eu esqueci oque ia fazer com ele, então deixa assim mesmo
+    if(achouSugestao) return 1;
+    else return 0;
+}
+
+int main() {
+    setlocale(LC_ALL, "");
+
+    clock_t start = clock();
+
+    FILE *arq = fopen("textosExemplo\\palavra.txt", "r");  // texto exemplo
+    testeArquivo(arq);
+    FILE *dic = fopen("textosExemplo\\dicionario.txt", "r"); // banco de palavras
+    testeArquivo(dic);
+    FILE *arqCopia = fopen("textosExemplo\\resposta.txt", "w+");  // texto formatado
+    testeArquivo(arqCopia);
+
+    //COMECO DO DICIONARIO NA LISTA ENCADEADA (ideia ruim)
+    // dicionario *comecoLista = malloc(sizeof(dicionario));   
+    // leituraDicionarioLISTA(arq, comecoLista);
+
+    unsigned int qtdPalavrasDicionario = achaTamanhoArquivo(dic);
+    printf("teste 1\n");
+    unsigned char bancoPalavras[qtdPalavrasDicionario][TAM_MAX_PALAVRA];
+    printf("teste 2\n");
+
+    leituraDicionarioVETOR(dic, bancoPalavras, qtdPalavrasDicionario); // escrita do dicionario na RAM
+    printf("teste 3\n");
+
+    unsigned char *palavra = malloc(sizeof(char) * TAM_MAX_PALAVRA); // ponteiro para teste de comparação com o dicionario
+    unsigned char *resetaPalavra = palavra;                          // ponteiro para voltar para posição original
+
+    unsigned char letra;
+    short int fimDePalavra; // poderia ser booleana
+    short int achouDicionario;  // poderia ser booleana
+    printf("teste 4\n");
+
+    if(mostraNoTerminal)    printf("\n--------------------------------\n");
+    do{
+        // leitura e teste de caractere
+        letra = fgetc(arq);
+        fimDePalavra = testaLetra(letra);
+
+        if(letra == 255) break;
+        
+        // adiciona o caractere e sobe o ponteiro na string contando que seja valido
+        if(fimDePalavra) {
+            *palavra = letra;
+            palavra++;
+            *palavra = '\0';
+        }
+
+        /*  Quando o programa detecta um caractere não valido ele reconhece
+            o conjunto de caracteres anteriores como uma palavra.
+            Então o ponteiro volta para a primeira posição e usa
+            as funções hamming e levenshtein
+        */
+    
+        else{
+            palavra = resetaPalavra;    // volta string para posicao original para comparar com o dicionario
+            achouDicionario = buscaBinaria(bancoPalavras, palavra, qtdPalavrasDicionario, strlen(palavra));
+
+            if(achouDicionario) {    // encontrou no dicionario
+                if(mostraNoTerminal){
+                    printf("%s", palavra);
+                    printf("%c", letra);
+                }
+                fprintf(arqCopia, "%s", palavra);
+                fprintf(arqCopia, "%c", letra);
+                limpaPonteiroPalavra(palavra, resetaPalavra);
+            }
+    
+            else {    // não encontrou a palavra no dicionario
+                if(mostraNoTerminal)    printf("[%s]", palavra);
+                fprintf(arqCopia, "[%s]", palavra);
+                sugestaoPalavra(bancoPalavras, palavra, qtdPalavrasDicionario, strlen(palavra), arqCopia);
+                
+                if(mostraNoTerminal)    printf("%c", letra);
+                fprintf(arqCopia, "%c", letra);
+                limpaPonteiroPalavra(palavra, resetaPalavra);
+            }
+        palavra = resetaPalavra;    // volta string para posicao original para armazenar uma nova palavra
+        }
+    } while(letra!=255);
+    
+    if(mostraNoTerminal)    printf("\n--------------------------------\n");
 
 
-printf("\ntotal de palavras: %d", totalPalavras);
+    printf("teste 5\n");
+    fseek(arq, 0, SEEK_SET);
+    fseek(dic, 0, SEEK_SET);
+    fseek(arqCopia, 0, SEEK_SET);
 
-// fcloseall();    // funcao que fecha todos os arquivos, não sei se é confiavel
-fclose(arq);
-// fclose(dic);
-// fclose(arqCopia);
+    printf("teste 6\n");
+    fclose(arq);
+    fclose(dic);
+    fclose(arqCopia);
 
-end = clock();
-double tempo_duracao_programa = (double) (end - start) / CLOCKS_PER_SEC;
-printf("\nTEMPO DE DURACAO DO PROGRAMA: %lf", tempo_duracao_programa);
+    printf("teste 7\n");
+    clock_t end = clock();
+    double tempo_duracao_programa = (double)(end - start) / CLOCKS_PER_SEC;
+    printf("\nTEMPO DE DURACAO DO PROGRAMA: %.10lfsec", tempo_duracao_programa);
+    printf("\nFIM DO PROGRAMA");
 
-
-return 0;
-
+    exit(0);
 }
